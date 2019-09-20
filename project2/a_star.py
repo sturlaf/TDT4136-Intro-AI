@@ -7,17 +7,16 @@ Created on Wed Sep 18 19:35:06 2019
 """
 
 import Node
-from MapSamfundet import Map_Obj 
+import MapSamfundet
 import numpy as np
 
 
 class A_star():
     
     
-    
     def __init__(self, task):
         
-        self.map_obj = Map_Obj(task = task)
+        self.map_obj = MapSamfundet.Map_Obj(task = task)
         
         
     def manhattan_distance(self, position):
