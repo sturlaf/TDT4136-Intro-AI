@@ -6,12 +6,12 @@ Created on Wed Sep 18 19:35:06 2019
 @author: sturlafr
 """
 
-from __pycache__ import Node
+import Node
 from MapSamfundet import Map_Obj 
 import numpy as np
 
 
-class a_star():
+class A_star():
     
     
     
@@ -28,7 +28,7 @@ class a_star():
         
         y_axsis = np.abs(position[1] - goal_pos[1])
         
-        return x_axsis + y_axsis       
+        return x_axsis + y_axsis
         
 
     def A_star(self):
@@ -39,34 +39,37 @@ class a_star():
         
         start_pos = self.map_obj.get_start_pos()
         
-        node_0 = Node(start_pos, self.manhattan_distance(start_pos))
+        node_0 = Node.node(start_pos, self.manhattan_distance(start_pos))
         
-        Open += node_0
+        Open.append(node_0)
         
-        while True:
-            
-            if Open == []:
-                return "No solution"
+        positions_expanded[tuple(node_0.get_position())] = node_0
+        
+        while not Open == []:
+
             
             node = Open.pop()
             
-            if self.manhattan_distance(node.position) == 0:
-                return "Succses"
+            if node.position == self.map_obj.get_goal_pos():
+                self.reconstruct_path_on_map(node)
+                return self.reconstruct_path(node)
             
-            Closed += node
+            Closed.append(node)
+            
             
             succsesors_pos = self.generate_succsesors(node.position)
             
             for succ_pos in succsesors_pos:
                                 
-                if not positions_expanded.has_key(succ_pos):
+                if not (tuple(succ_pos) in positions_expanded):
                     
-                    succ = Node(succ_pos, self.manhattan_distance(succ_pos))
+                    succ = Node.node(succ_pos, self.manhattan_distance(succ_pos))
                     
-                    positions_expanded[succ_pos] = succ
+                    positions_expanded[tuple(succ_pos)] = succ
                     
                 else:
-                    succ = positions_expanded[succ_pos]
+                    
+                    succ = positions_expanded[tuple(succ_pos)]
                 
                 node.set_succsesor(succ)
                 
@@ -76,18 +79,21 @@ class a_star():
                     
                     succ.attach_and_eval(node, arc_cost, self.manhattan_distance(succ_pos))
                     
-                    Open += succ
+                    Open.append(succ)
                     
-                    Open.sort(key = get_f_value)
+                    Open.sort(key = Node.node.get_f_value, reverse = True)
                     
-                else:
+                elif node.get_g_value() + arc_cost < succ.get_g_value():
                     
                     succ.attach_and_eval(node, arc_cost, self.manhattan_distance(succ_pos))
                     
                     if Closed.__contains__(succ):
                     
                         self.propagate_path_improvements(succ)
-                    
+        
+        
+                     
+        return 'No solution found'
                     
                     
     def propagate_path_improvements(self, node):
@@ -100,7 +106,7 @@ class a_star():
             
             if node_g_value + arc_cost < kid.get_g_value():
                 
-                kid.attach_and_eval(node, arc_cost, self.manhattan_distance(kid.get_position()))
+                kid.attach_and_eval(node, arc_cost, kid.heuristic)
                 
                 self.propagate_path_improvements(kid)             
                 
@@ -113,20 +119,42 @@ class a_star():
         y_pos = position[1]
         
         if self.map_obj.get_cell_value([x_pos, y_pos + 1]) != -1:
-            succsesors_pos += [x_pos, y_pos + 1]
+            succsesors_pos.append([x_pos, y_pos + 1])
         
         if self.map_obj.get_cell_value([x_pos + 1, y_pos]) != -1:
-            succsesors_pos += [x_pos + 1, y_pos]
+            succsesors_pos.append([x_pos + 1, y_pos])
             
         if self.map_obj.get_cell_value([x_pos, y_pos - 1]) != -1:
-            succsesors_pos += [x_pos, y_pos - 1]
+            succsesors_pos.append([x_pos, y_pos - 1])
             
         if self.map_obj.get_cell_value([x_pos - 1, y_pos]) != -1:
-            succsesors_pos += [x_pos - 1, y_pos]
+            succsesors_pos.append([x_pos - 1, y_pos])
     
         return succsesors_pos
     
     
-    def sort_by_f_value(node):
-        return node.get_f_value()
+    def reconstruct_path(self, node):
+        
+        path = []
+        
+        while node != None:
+            
+            path.append(node.get_position())
+            
+            node = node.get_parent()
+        
+        return path
     
+    def reconstruct_path_on_map(self, node):
+        
+        while node.get_parent() != None:
+            
+            self.map_obj.replace_map_values(node.get_position(), 5, self.map_obj.get_goal_pos())
+            
+            
+            node = node.get_parent()
+       
+        self.map_obj.show_map()
+            
+
+

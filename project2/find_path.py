@@ -6,9 +6,20 @@ Created on Wed Sep 18 22:25:07 2019
 @author: sturlafr
 """
 
-from __pycache__ import a_star
+import a_star
 
-task1 = a_star(1)
+task1 = a_star.A_star(1)
 
-print(task1.A_star())
+task2 = a_star.A_star(2)
 
+task3 = a_star.A_star(3)
+
+task4 = a_star.A_star(4)
+
+task1.A_star()
+
+task2.A_star()
+
+task3.A_star()
+
+task4.A_star()

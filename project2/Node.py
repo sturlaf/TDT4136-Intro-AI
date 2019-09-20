@@ -39,6 +39,10 @@ class node():
         return self.g_value
     
     
+    def get_position(self):
+        return self.position
+    
+    
     def get_f_value(self):
         return self.f_value
     
@@ -49,6 +53,5 @@ class node():
         self.g_value = parent.get_g_value() + arc_cost
         
         self.f_value = self.get_g_value() + heuristic
-    
     
     
