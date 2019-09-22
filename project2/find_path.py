@@ -8,18 +8,16 @@ Created on Wed Sep 18 22:25:07 2019
 
 import a_star
 
-task1 = a_star.A_star(1)
 
-task2 = a_star.A_star(2)
+def solve_task(task_num: int) -> None:
+    """Solves the map problem"""
+    
+    task = a_star.A_star(task_num)
+    
+    task.A_star()
+    
 
-task3 = a_star.A_star(3)
-
-task4 = a_star.A_star(4)
-
-task1.A_star()
-
-task2.A_star()
-
-task3.A_star()
-
-task4.A_star()
+#Solve the four tasks
+for i in range(1, 5):
+    solve_task(i)
+    

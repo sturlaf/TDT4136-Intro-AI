@@ -9,17 +9,37 @@ Created on Wed Sep 18 19:35:06 2019
 import Node
 import MapSamfundet
 import numpy as np
+from typing import List
 
 
 class A_star():
+    """
+    A class for solving the shorthest path problem for task 1, 2, 3, 4.
+    
+    Fields:
+        map_object - a object representing the map with start and goal position
+    """
     
     
-    def __init__(self, task):
+    def __init__(self, task: int):
+        """
+        The task selected, initializes the map with the correct start and goal positions.
+        
+        Parameters:
+            task - a number between 1-4, specifying the initial conditions of the map
+        """
         
         self.map_obj = MapSamfundet.Map_Obj(task = task)
         
+    
+    
+    def manhattan_distance(self, position: List[int]) -> int:
+        """
+        Computes the manhattan distance between a given position and the goal position.
         
-    def manhattan_distance(self, position):
+        Parameters:
+            position - [x, y] specyfying the place on the map
+        """
         
         goal_pos = self.map_obj.get_end_goal_pos()
         
@@ -30,15 +50,25 @@ class A_star():
         return x_axsis + y_axsis
         
 
+
     def A_star(self):
+        """
+        The A* algorithm. Finds the shorthest path using 
+        the manhattan distance as heuristic.
+        """
         
         Open = []
         Closed = []
+        
+        #A dictionary to check if a position on the map already has been explored.
         positions_expanded = {}
         
+        #The initial starting position.
         start_pos = self.map_obj.get_start_pos()
         
+        #Generates a initial node, with no parents at the starting position.
         node_0 = Node.node(start_pos, self.manhattan_distance(start_pos))
+        
         
         Open.append(node_0)
         
@@ -46,47 +76,62 @@ class A_star():
         
         while not Open == []:
 
-            
+            #Pick the node with the lowest estimated distance to goal
             node = Open.pop()
             
+            #Check if this node is the goal_node
             if node.position == self.map_obj.get_goal_pos():
+                
+                #If goal is reached: Draw and list the shorthest path
                 self.reconstruct_path_on_map(node)
                 return self.reconstruct_path(node)
             
             Closed.append(node)
             
+            #Generate the position of the neigbours of this node
+            succsesors_pos = self.generate_succsesors(node.get_position())
             
-            succsesors_pos = self.generate_succsesors(node.position)
-            
+            #For all the neigbours of this node, check if a better path is found
             for succ_pos in succsesors_pos:
                                 
+                #Check if this node has been generated before
                 if not (tuple(succ_pos) in positions_expanded):
                     
+                    #If the position has not been visited before, create a new node representing this position
                     succ = Node.node(succ_pos, self.manhattan_distance(succ_pos))
                     
+                    #Add the new node to the dictonary of previosly expanded positions
                     positions_expanded[tuple(succ_pos)] = succ
                     
                 else:
                     
+                    #If the position already exist as a node, use this
                     succ = positions_expanded[tuple(succ_pos)]
                 
+                #Succ is now a child of node
                 node.set_succsesor(succ)
                 
+                #Get the cost of moving from node to succ
                 arc_cost = self.map_obj.get_cell_value(succ_pos)
                 
-                if not Open.__contains__(succ) and not Closed.__contains__(succ):
+                #If the node is not allready closed, and not yet in open, then add succ to open.
+                if not (succ in Open or succ in Closed):
                     
-                    succ.attach_and_eval(node, arc_cost, self.manhattan_distance(succ_pos))
+                    #Set the parent and the estimated distance for succ.
+                    succ.attach_and_eval(node, arc_cost)
                     
+                    #Push succ onto open.
                     Open.append(succ)
                     
+                    #Sort open by f_values. The last should the most promising, such that it is expanded first.
                     Open.sort(key = Node.node.get_f_value, reverse = True)
                     
+                #If a better path is found to succ, update the graph
                 elif node.get_g_value() + arc_cost < succ.get_g_value():
                     
-                    succ.attach_and_eval(node, arc_cost, self.manhattan_distance(succ_pos))
+                    succ.attach_and_eval(node, arc_cost)
                     
-                    if Closed.__contains__(succ):
+                    if succ in Closed:
                     
                         self.propagate_path_improvements(succ)
         
@@ -95,22 +140,41 @@ class A_star():
         return 'No solution found'
                     
                     
-    def propagate_path_improvements(self, node):
+    def propagate_path_improvements(self, node: Node.node) -> None:
+        """ 
+        If there is found a less costly path to node, this function pass this 
+        path down to the succsesors of the node
+        
+        Parameters:
+            node - the node where a better path is found
+            
+        """
         
         node_g_value = node.get_g_value()
         
+        #Every succsesor could possibly need to update their distance from the initial node
         for kid in node.get_succsesors():
             
             arc_cost = self.map_obj.get_cell_value(kid.get_position())
             
             if node_g_value + arc_cost < kid.get_g_value():
                 
-                kid.attach_and_eval(node, arc_cost, kid.heuristic)
+                kid.attach_and_eval(node, arc_cost)
                 
                 self.propagate_path_improvements(kid)             
                 
                     
-    def generate_succsesors(self, position):
+    def generate_succsesors(self, position: List[int]) -> List[List[int]]:
+        """
+        This function generates all posible moves from the given position.
+        If the value on the map is -1, then it represents a wall and should be avoided
+        
+        Parameters:
+            position - the position from where to search from
+            
+        Return:
+            A list with all possible succsesors
+        """
         
         succsesors_pos = []
         
@@ -132,20 +196,39 @@ class A_star():
         return succsesors_pos
     
     
-    def reconstruct_path(self, node):
+    def reconstruct_path(self, node: Node.node) -> List[int]:
+        """
+        A function that reconstructs the shorthest path found by the algorithm.
+        
+        Parameters:
+            node - the last node in the path
+            
+        Return:
+            A list with all the positions the path runs through
+        """
         
         path = []
         
+        #Find the parents to each node. The initial node is reached when the parent is None
         while node != None:
             
             path.append(node.get_position())
             
             node = node.get_parent()
         
-        return path
+        #The list is now backwars, with the last move first, so returns the reverse of this
+        return path.reverse()
     
-    def reconstruct_path_on_map(self, node):
+    
+    def reconstruct_path_on_map(self, node: Node.node) -> None:
+        """
+        A function that draws a map of the shorthest path found by the algorithm
         
+        Parameters:
+            node - the last node of the path
+        """
+        
+        #Find the parents to each node. The initial node is reached when the parent is None
         while node.get_parent() != None:
             
             self.map_obj.replace_map_values(node.get_position(), 5, self.map_obj.get_goal_pos())
@@ -153,6 +236,7 @@ class A_star():
             
             node = node.get_parent()
        
+        #Use a function from MapSamfundet to display map
         self.map_obj.show_map()
             
 
