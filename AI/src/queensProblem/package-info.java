@@ -1,0 +1,8 @@
+/**
+ * 
+ */
+/**
+ * @author Sturla
+ *
+ */
+package queensProblem;
