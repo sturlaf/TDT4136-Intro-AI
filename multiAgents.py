@@ -163,7 +163,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
     """
-    memo = dict()
 
     def getAction(self, gameState):
         """
@@ -177,45 +176,35 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 agentID = 0
                 depth += 1
             
+            best_action = None
+            
             if gameState.isWin() or gameState.isLose() or self.depth == depth:
-                return scoreEvaluationFunction(gameState)
+                return scoreEvaluationFunction(gameState), best_action
             
             v = float('-Inf')
             
-            if gameState.isWin() or gameState.isLose() or self.depth == depth:
-                return scoreEvaluationFunction(gameState), None
-            
-            actions = gameState.getLegalActions(agentID)
-            
-            if gameState in self.memo:
-                actions = list(set(self.memo[gameState] + actions))
-            
-            best_action = None
-            result= []
     
-            for action in actions:
+            for action in gameState.getLegalActions(agentID):
                 
                 min_val, advised_action = min_value(gameState.generateSuccessor(agentID, action), alfa, beta, agentID + 1, depth)
                 
-                result.append([min_val, advised_action])
-                
                 if min_val > v:
                     v = min_val
-                    best_action = advised_action
+                    best_action = action
                 
                 if v > beta:
-                    return v, best_action
+                    return v, action
                 
                 alfa = max(alfa, v)
             
-            result.sort()
-            self.memo[gameState] = [e[1] for e in result]
             return v, best_action
         
         def min_value(gameState, alfa, beta, agentID, depth):
             
+            best_action = None
+            
             if gameState.isWin() or gameState.isLose():
-                return scoreEvaluationFunction(gameState), None
+                return scoreEvaluationFunction(gameState), best_action
             
             v = float('Inf')
             
@@ -223,40 +212,26 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 function = max_value
             else:
                 function = min_value
-                
-            actions = gameState.getLegalActions(agentID)
             
-            if gameState in self.memo:
-                actions = list(set(self.memo[gameState] + actions))
-            
-            best_action = None
-            result = []
-            
-            for action in actions:
+            for action in gameState.getLegalActions(agentID):
                 
                 val, advised_action = function(gameState.generateSuccessor(agentID, action), alfa, beta, agentID + 1, depth)
                 
-                result.append([val, advised_action])
-                
-                if val > v:
+                if val < v:
                     v = val
-                    best_action = advised_action                
+                    best_action = action                
                 
                 if v < alfa:
-                    return v, best_action
+                    return v, action
                 
                 beta = min(beta, v)
                 
-            result.sort(reverse = True)
-                
-            self.memo[gameState] = [e[1] for e in result]
             return v, best_action
         
         
         alfa = float('-Inf')
         beta = float('Inf')
         v, action = max_value(gameState, alfa, beta, 0, 0)
-        self.memo.pop(gameState)
         return action
         
 
