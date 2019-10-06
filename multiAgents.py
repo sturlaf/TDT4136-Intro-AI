@@ -112,50 +112,27 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
            
     def getAction(self, gameState):
-        """
-        Returns the minimax action from the current gameState using self.depth
-        and self.evaluationFunction.
-
-        Here are some method calls that might be useful when implementing minimax.
-
-        gameState.getLegalActions(agentIndex):
-        Returns a list of legal actions for an agent
-        agentIndex=0 means Pacman, ghosts are >= 1
-
-        gameState.generateSuccessor(agentIndex, action):
-        Returns the successor game state after an agent takes an action
-
-        gameState.getNumAgents():
-        Returns the total number of agents in the game
-
-        gameState.isWin():
-        Returns whether or not the game state is a winning state
-
-        gameState.isLose():
-        Returns whether or not the game state is a losing state
-        """
-        "*** YOUR CODE HERE ***"
+        '''
+        Returns the best action using the max-min algorithm, and self.depth as max depth
+        '''
         def minMax(gameState, agentID, depth):
             '''
             Implements the max-min algorithm. 
             '''
-            #Chechs if agentID is really pacman, and increases depth
-            if agentID == gameState.getNumAgents():
+            if agentID == gameState.getNumAgents(): #Chechs if agentID is really pacman, and increases depth
                 depth += 1
                 agentID = 0    
-        
-            #Chech if the gameState is a terminal state, 
+            #Chech if the gameState is a terminal state, or max depth is reached
             if gameState.isWin() or gameState.isLose() or depth == self.depth:
                 return scoreEvaluationFunction(gameState), None
-            
-            result = []
+            action_values = [] # A list with all the actions and their values
             for action in gameState.getLegalActions(agentID):
-                result.append((minMax(gameState.generateSuccessor(agentID, action), agentID + 1, depth)[0], action))
-                
+                #Appends the value of the action and the action to the list of action values
+                action_values.append([minMax(gameState.generateSuccessor(agentID, action), agentID + 1, depth)[0], action])
             if agentID == 0:
-                return max(result) #Pacman wants to maximize his scoreEvaluation
+                return max(action_values) #Pacman wants to maximize his scoreEvaluation
             else:
-                return min(result) #The ghosts wants to minimize pacmans 
+                return min(action_values) #The ghosts wants to minimize pacmans scoreEvaluation
             
         return minMax(gameState, 0, 0)[1] #Returns the action with the higest score evaluation
 
@@ -165,74 +142,61 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
 
     def getAction(self, gameState):
-        """
-        Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
+        '''
+        Returns the minimax action using self.depth and self.evaluationFunction, and the alpha- beta algorithm
+        '''
         
         def max_value(gameState, alfa, beta, agentID, depth):
-            
+            '''
+            Tries to find the action maximation the score. Pacman wants to know this.
+            '''
             if agentID != 0:
-                agentID = 0
-                depth += 1
-            
-            best_action = None
-            
-            if gameState.isWin() or gameState.isLose() or self.depth == depth:
+                agentID = 0 #Every time this function is called, it is pacman to move
+                depth += 1 #Every time except for the first this function is called, the iteration is one layer down
+            best_action = None #The best action so far
+            if gameState.isWin() or gameState.isLose() or self.depth == depth: #If this is a terminal state, or max depth is reached
                 return scoreEvaluationFunction(gameState), best_action
             
-            v = float('-Inf')
-            
-    
+            v = float('-Inf') #The value of the best move so far
             for action in gameState.getLegalActions(agentID):
-                
-                min_val, advised_action = min_value(gameState.generateSuccessor(agentID, action), alfa, beta, agentID + 1, depth)
-                
-                if min_val > v:
+                #Calculate the value of this move
+                min_val = min_value(gameState.generateSuccessor(agentID, action), alfa, beta, agentID + 1, depth)[0]
+                if min_val > v: #If this action has a better value then the others checed, this is the new best action
                     v = min_val
                     best_action = action
-                
-                if v > beta:
+                if v > beta: #If this condition is true, there is no point in expanding further
                     return v, action
-                
                 alfa = max(alfa, v)
-            
             return v, best_action
         
         def min_value(gameState, alfa, beta, agentID, depth):
-            
-            best_action = None
-            
-            if gameState.isWin() or gameState.isLose():
+            '''
+            Tries to find the action with the minimal score. The ghosts wants to know this
+            '''
+            best_action = None #The best action so far
+            if gameState.isWin() or gameState.isLose(): #Checking if this is a terminal state
                 return scoreEvaluationFunction(gameState), best_action
             
-            v = float('Inf')
-            
-            if agentID == gameState.getNumAgents() - 1:
+            v = float('Inf') #The value of the best move so far
+            #If this is the last ghost, next agent will be pacman, and will search for max values
+            if agentID == gameState.getNumAgents() - 1: 
                 function = max_value
-            else:
+            else: #Otherwise, the next agent will also be a ghost, and will search for min values
                 function = min_value
-            
             for action in gameState.getLegalActions(agentID):
-                
-                val, advised_action = function(gameState.generateSuccessor(agentID, action), alfa, beta, agentID + 1, depth)
-                
-                if val < v:
+                #Calculate the value of this move
+                val = function(gameState.generateSuccessor(agentID, action), alfa, beta, agentID + 1, depth)[0]
+                if val < v: #If this action has a better value then the others checed, this is the new best action
                     v = val
                     best_action = action                
-                
-                if v < alfa:
+                if v < alfa: #If this condition is true, there is no point in expanding further
                     return v, action
-                
                 beta = min(beta, v)
-                
             return v, best_action
         
-        
-        alfa = float('-Inf')
-        beta = float('Inf')
-        v, action = max_value(gameState, alfa, beta, 0, 0)
-        return action
+        alfa = float('-Inf') #MAX's best value
+        beta = float('Inf') #MIN's best value
+        return max_value(gameState, alfa, beta, 0, 0)[1] #Returns an action
         
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
